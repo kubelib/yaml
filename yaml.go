@@ -67,7 +67,9 @@ func Marshal(obj interface{}) ([]byte, error) {
 //  - Unknown fields, i.e. serialized data that do not map to a field in obj, are ignored. Use UnmarshalStrict to override.
 //  - YAML non-string keys, e.g. ints, bools and floats, are converted to strings implicitly during the YAML to JSON conversion process.
 //  - There are no compatibility guarantees for returned error values.
-func Unmarshal(yamlBytes []byte, obj interface{}) error {
+//
+//	unused parameter is added to be compatible with current implementation
+func Unmarshal(yamlBytes []byte, obj interface{}, unused ...interface{}) error {
 	_, err := unmarshal(yamlBytes, obj, allowUnknownFields)
 	return err
 }
@@ -75,8 +77,16 @@ func Unmarshal(yamlBytes []byte, obj interface{}) error {
 // UnmarshalStrict is similar to Unmarshal (please read its documentation for reference), with the following exceptions:
 //
 //  - If obj, or any of its recursive children, is a struct, presence of fields in the serialized data unknown to the struct will yield a strict error.
-func UnmarshalStrict(yamlBytes []byte, obj interface{}) (strictErrors []error, err error) {
-	return unmarshal(yamlBytes, obj, disallowUnknownFields)
+//
+//	unused parameter is added to be compatible with current implementation, same for returning only one error
+func UnmarshalStrict(yamlBytes []byte, obj interface{}, unused ...interface{}) error {
+	if strictErrors, err := unmarshal(yamlBytes, obj, disallowUnknownFields); err != nil {
+		return err
+	} else if len(strictErrors) > 0 {
+		return strictErrors[0]
+	}
+
+	return nil
 }
 
 // unmarshal unmarshals the given YAML byte stream into the given interface,
@@ -150,6 +160,11 @@ func JSONToYAML(jsonBytes []byte) ([]byte, error) {
 // - Duplicate fields (only case-sensitive matches) in objects result in a fatal error, as defined in the YAML spec.
 // - There are no compatibility guarantees for returned error values.
 func YAMLToJSON(yamlBytes []byte) ([]byte, error) {
+	return yamlToJSONTarget(yamlBytes, nil)
+}
+
+// DEPRECATED
+func YAMLToJSONStrict(yamlBytes []byte) ([]byte, error) {
 	return yamlToJSONTarget(yamlBytes, nil)
 }
 
